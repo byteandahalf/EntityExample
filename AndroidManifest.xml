@@ -15,7 +15,7 @@
     <meta-data android:name="net.zhuoweizhang.mcpelauncher.api.nativelibname"
         android:value="com.byteandahalf.entityex"/>
 
-    <meta-data android:name="net.zhuoweizhang.mcpelauncher.api.targetmcpeversion" android:value="0.13.0"/>
+    <meta-data android:name="net.zhuoweizhang.mcpelauncher.api.targetmcpeversion" android:value="0.14.3"/>
     </application>
 
 </manifest> 
