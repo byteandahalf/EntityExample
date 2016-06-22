@@ -1,51 +1,64 @@
 #pragma once
+
 #include <string>
 #include <memory>
 #include <vector>
-class BlockSource;
-class Level;
-class Material;
-class Player;
-class EntityPos;
-struct BlockPos;
-struct Vec2;
-class CompoundTag;
-class ArmorSlot;
-class EntityLink;
-class EntityDamageSource;
-class EntityEvent;
-class ItemInstance;
-class DimensionId;
-class ChangeDimensionPacket;
-struct AABB;
-struct MaterialType;
-#include "EntityType.h"
-#include "../Vec3.h"
 
-class Entity {
-public:
-	void* synchedData; // 4
+#include "../phys/Vec3.h"
+
+struct BlockSource;
+struct Level;
+struct Material;
+struct Player;
+struct EntityPos;
+struct EntityLocation;
+struct BlockPos;
+struct FullBlock;
+struct MaterialType;
+struct Vec2;
+struct CompoundTag;
+struct EntityLink;
+struct EntityDamageSource;
+struct EntityEvent;
+struct ItemInstance;
+struct ChangeDimensionPacket;
+struct ArmorSlot;
+struct AABB;
+struct DimensionId;
+#include "EntityType.h"
+
+struct Entity
+{
+	/* constructors */
+	Entity(BlockSource&);
+	Entity(Level&);
+
+	/* member functions */
+	void _init();
+
+	/* fields */
+	void* idk; // 4
 	Vec3 pos; // 8
 	Vec3 oldPos; // 20
 	Vec3 chunkPos; // 32
 	Vec3 velocity; // 44
 	float yaw; // 56
 	float pitch; // 60
-	float lastYaw; // 64
-	float lastPitch; // 68
-	char filler[44]; // 72
-	Level& level; // 116
-	char filler2[68]; // 120
-	float heightOffset; // 188
-	char filler3[52]; // 192
-	int rendererId; // 244
-	char filler4[82]; // 248
-	bool wasInWater; // 330
-	char dud[5]; // 331
-	BlockSource& region; // 336
+	float _oldYaw; // 64
+	float _oldPitch; // 68
+	char filler[48]; // 72
+	Level& level; // 120
+	char filler2[68]; // 124
+	float heightOffset; // 192
+	char filler3[64]; // 196
+	int rendererId; // 260
+	std::vector<Entity*> _riders; // 264
+	Entity& immediateRider; // 276
+	Entity& riding; // 280
+	char filler4[80]; // 284
+	BlockSource& region; // 364
 
-	Entity(BlockSource&);
-	
+	/* vtable */
 	virtual ~Entity();
 	virtual void _postInit();
 	virtual void reset();
@@ -62,7 +75,7 @@ public:
 	virtual void moveRelative(float, float, float);
 	virtual void lerpTo(const Vec3&, const Vec2&, int);
 	virtual void lerpMotion(const Vec3&);
-	virtual void turn(const Vec2&);
+	virtual void turn(const Vec2&, bool);
 	virtual void interpolateTurn(const Vec2&);
 	virtual void* getAddPacket();
 	virtual void normalTick();
@@ -77,7 +90,7 @@ public:
 	virtual bool intersects(const Vec3&, const Vec3&);
 	virtual bool isFree(const Vec3&, float);
 	virtual bool isFree(const Vec3&);
-	virtual bool isInWall();
+	virtual bool isInWall() const;
 	virtual bool isInvisible();
 	virtual bool canShowNameTag();
 	virtual void setNameTagVisible(bool);
@@ -86,6 +99,7 @@ public:
 	virtual bool isInWater() const;
 	virtual bool isInWaterOrRain();
 	virtual bool isInLava();
+	virtual bool isBaby() const;
 	virtual bool isUnderLiquid(MaterialType) const;
 	virtual void makeStuckInWeb();
 	virtual float getHeadHeight() const;
@@ -106,15 +120,15 @@ public:
 	virtual bool isPushable() const;
 	virtual bool isShootable();
 	virtual bool isSneaking() const;
-	virtual bool isAlive();
+	virtual bool isAlive() const;
 	virtual bool isOnFire() const;
 	virtual bool isCreativeModeAllowed();
 	virtual bool isSurfaceMob() const;
-	virtual bool shouldRenderAtSqrDistance(float);
 	virtual void hurt(const EntityDamageSource&, int);
 	virtual void animateHurt();
 	virtual void doFireHurt(int);
 	virtual void onLightningHit();
+	virtual void onBounceStarted(const BlockPos&, const FullBlock&);
 	virtual void handleEntityEvent(EntityEvent);
 	virtual int getPickRadius();
 	virtual void spawnAtLocation(int, int);
@@ -126,13 +140,13 @@ public:
 	virtual void save(CompoundTag&);
 	virtual void saveWithoutId(CompoundTag&);
 	virtual void load(const CompoundTag&);
-	virtual void loadLinks(const CompoundTag&, std::vector<EntityLink, std::allocator<EntityLink>>&);
+	virtual void loadLinks(const CompoundTag&, std::vector<EntityLink>&);
 	virtual EntityType getEntityTypeId() const = 0;
 	virtual void queryEntityRenderer();
-	virtual void getSourceUniqueID();
+	virtual long getSourceUniqueID();
 	virtual void setOnFire(int);
 	virtual AABB getHandleWaterAABB() const;
-	virtual void handleInsidePortal();
+	virtual void handleInsidePortal(const BlockPos&);
 	virtual int getPortalCooldown() const;
 	virtual int getPortalWaitTime() const;
 	virtual DimensionId getDimensionId() const;
@@ -141,20 +155,24 @@ public:
 	virtual Player* getControllingPlayer() const;
 	virtual void checkFallDamage(float, bool);
 	virtual void causeFallDamage(float);
-	virtual void playSound(const std::string&, float, float);
+	virtual void playSound(const std::string&, float, float, EntityLocation);
 	virtual void onSynchedDataUpdate(int);
 	virtual bool canAddRider(Entity&) const;
+	virtual float getEyeHeight() const;
 	virtual void sendMotionPacketIfNeeded();
 	virtual void stopRiding(bool);
 	virtual void buildDebugInfo(std::string&) const;
+	virtual bool hasOutputSignal(signed char) const;
+	virtual int getOutputSignal() const;
+	virtual std::string getDebugText(std::vector<std::string>&);
 	virtual void setSize(float, float);
 	virtual void setPos(const EntityPos&);
 	virtual void outOfWorld();
 	virtual void markHurt();
 	virtual void burn(int);
 	virtual void lavaHurt();
-	virtual void readAdditionalSaveData(const CompoundTag*) = 0;
-	virtual void addAdditionalSaveData(CompoundTag*) = 0;
+	virtual void readAdditionalSaveData(const CompoundTag&) = 0;
+	virtual void addAdditionalSaveData(CompoundTag&) = 0;
 	virtual void _playStepSound(const BlockPos&, int);
 	virtual void checkInsideBlocks(float);
 	virtual void pushOutOfBlocks(const Vec3&);
@@ -162,9 +180,6 @@ public:
 	virtual void doWaterSplashEffect();
 	virtual void updateInsideBlock();
 	virtual void onBlockCollision(int);
-	
-	void _init();
 };
 
 typedef std::vector<Entity*> EntityList;
-
