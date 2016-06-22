@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include "../phys/Vec3.h"
+#include "../Vec3.h"
 
 struct BlockSource;
 struct Level;
